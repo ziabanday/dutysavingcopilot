@@ -1,0 +1,16 @@
+[
+  {
+    "code": "3926.90.99",
+    "description": "Other articles of plastics",
+    "duty_rate": "5%",
+    "chapter": 39,
+    "notes": ""
+  },
+  {
+    "code": "4202.92.90",
+    "description": "Travel, sports and similar bags",
+    "duty_rate": "17.6%",
+    "chapter": 42,
+    "notes": ""
+  }
+]

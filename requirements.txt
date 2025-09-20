@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+openai>=1.35.0
+httpx
+sqlalchemy
+psycopg2-binary
+pgvector
+python-dotenv
+pytest
+requests
+pydantic>=2
