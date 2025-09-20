@@ -3,3 +3,7 @@ __pycache__/
 .env
 *.log
 budget/
+
+.env
+local.db
+
