@@ -1,0 +1,15 @@
+﻿{
+  "title": "HTS Seed — Chargers & Adapters",
+  "items": [
+    {
+      "code": "8504.40",
+      "title": "Static converters",
+      "text": "Static converters for converting electrical energy; includes AC/DC adapters and USB chargers per WCO notes. Typical retail USB phone chargers fall here when not combined with radio transmit/receive functions."
+    },
+    {
+      "code": "8504.90",
+      "title": "Parts of electrical transformers, static converters and inductors",
+      "text": "Parts suitable for use solely or principally with the apparatus of heading 8504. Use only when the product is a part, not a complete charger."
+    }
+  ]
+}
