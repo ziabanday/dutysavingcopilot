@@ -11,3 +11,23 @@ local.db
 local.db
 .env
 
+# backups
+*.bak
+*.bak_*
+*.bak.csv
+
+# logs & metrics scratch
+logs/**
+!logs/metrics.csv     # keep the canonical metrics.csv you committed
+
+# local db
+*.db
+
+# generated indexes / scratch data
+data/index/**
+data/eval/**
+data/rulings/raw/**
+
+# OS/editor noise
+.DS_Store
+*.swp
