@@ -13,6 +13,15 @@ data/cache/
 dist/
 build/
 *.zip
-.git
-.gitignore
-/.env
+# ---- Secrets & environment files ----
+# Ignore any env file patterns (root and nested)
+.env
+.env.*
+*.env
+
+# But keep a safe template for collaborators
+!.env.example
+
+# (optional) local Supabase configs if you export them
+supabase/.temp/
+
