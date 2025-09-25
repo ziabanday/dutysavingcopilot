@@ -1,0 +1,31 @@
+{"query":"65W USB-C laptop power adapter for notebooks","expected_top_codes":["8504.40"],"notes":"static converter / SMPS"}
+{"query":"AC to DC switching power supply 19V 3.42A for laptop","expected_top_codes":["8504.40"],"notes":"SMPS, adapter"}
+{"query":"USB-C wall charger for phone, 30W PD","expected_top_codes":["8504.40"],"notes":"static converter"}
+{"query":"DC-DC buck converter module 12V to 5V 3A","expected_top_codes":["8504.40"],"notes":"step-down converter"}
+{"query":"DC-DC boost converter 5V to 12V","expected_top_codes":["8504.40"],"notes":"step-up converter"}
+{"query":"AC motor variable frequency drive (VFD) 2HP","expected_top_codes":["8504.40"],"notes":"inverter drive"}
+{"query":"Uninterruptible power supply (UPS) 1kVA line-interactive","expected_top_codes":["8504.40"],"notes":"UPS static converter"}
+{"query":"Battery charger for Li-ion pack, 42V 2A","expected_top_codes":["8504.40"],"notes":"charger"}
+{"query":"LED power supply 24V 150W for signage","expected_top_codes":["8504.40"],"notes":"LED SMPS"}
+{"query":"Rectifier bridge module 100A","expected_top_codes":["8504.40"],"notes":"rectifier"}
+{"query":"Solar inverter 3kW single-phase","expected_top_codes":["8504.40"],"notes":"inverter"}
+{"query":"PoE injector 48V 30W (Power over Ethernet)","expected_top_codes":["8504.40"],"notes":"static converter"}
+{"query":"Wireless phone charger Qi 15W","expected_top_codes":["8504.40"],"notes":"inductive charger"}
+{"query":"Car charger 12V socket to dual USB-C 45W","expected_top_codes":["8504.40"],"notes":"DC-DC converter"}
+{"query":"SMPS industrial power module 24V 10A","expected_top_codes":["8504.40"],"notes":"switch-mode"}
+{"query":"Charger for e-bike battery 36V 4A","expected_top_codes":["8504.40"],"notes":"charger"}
+{"query":"Electronic ballast for fluorescent tube 40W","expected_top_codes":["8504.10"],"notes":"ballasts for discharge lamps"}
+{"query":"Magnetic ballast for HID lamp 250W","expected_top_codes":["8504.10"],"notes":"ballasts for discharge lamps"}
+{"query":"Toroidal transformer 500VA, 230/12V","expected_top_codes":["8504.31"],"notes":"≤1 kVA transformers"}
+{"query":"PCB mount transformer 25VA 230/12V","expected_top_codes":["8504.31"],"notes":"≤1 kVA transformers"}
+{"query":"Step-down transformer 750VA","expected_top_codes":["8504.31"],"notes":"≤1 kVA transformers"}
+{"query":"Mains transformer 1.5 kVA single-phase","expected_top_codes":["8504.32","8504.31"],"notes":">1 kVA to ≤16 kVA"}
+{"query":"Industrial transformer 5 kVA","expected_top_codes":["8504.32"],"notes":">1 kVA to ≤16 kVA"}
+{"query":"Power adapter with multiple DC outputs (5V/12V)","expected_top_codes":["8504.40"],"notes":"static converter"}
+{"query":"Laptop charger 20V 90W rectangular tip","expected_top_codes":["8504.40"],"notes":"adapter"}
+{"query":"Inline AC/DC adapter 12V 2A for CCTV","expected_top_codes":["8504.40"],"notes":"SMPS"}
+{"query":"DIN-rail DC-DC converter 24V to 5V 10W","expected_top_codes":["8504.40"],"notes":"converter"}
+{"query":"Programmable bench power supply 0-30V 5A","expected_top_codes":["8504.40"],"notes":"regulated PSU"}
+{"query":"Charger for lead-acid battery 12V 6A","expected_top_codes":["8504.40"],"notes":"charger"}
+{"query":"Power factor correction module for SMPS","expected_top_codes":["8504.40"],"notes":"PFC stage"}
+{"query":"AC/DC adapter for router 9V 1A","expected_top_codes":["8504.40"],"notes":"SMPS adapter"}

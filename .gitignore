@@ -1,33 +1,18 @@
+.venv
 __pycache__/
-.venv/
-.env
+*.pyc
+*.pyo
+*.pyd
 *.log
-budget/
-
-.env
-local.db
-
-
-local.db
-.env
-
-# backups
 *.bak
-*.bak_*
-*.bak.csv
-
-# logs & metrics scratch
-logs/**
-!logs/metrics.csv     # keep the canonical metrics.csv you committed
-
-# local db
-*.db
-
-# generated indexes / scratch data
-data/index/**
-data/eval/**
-data/rulings/raw/**
-
-# OS/editor noise
-.DS_Store
-*.swp
+local.db
+local.db.*
+logs/
+data/index/
+data/cache/
+dist/
+build/
+*.zip
+.git
+.gitignore
+/.env
