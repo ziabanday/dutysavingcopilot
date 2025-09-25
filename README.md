@@ -1,26 +1,22 @@
-# HTS Duty-Saving Copilot (MVP Skeleton)
+# HTS Duty-Saving Copilot
 
-Minimal starter aligned to Phase-1. Week-0/Week-1 focus: guardrails + /health + seed data.
+[Badges: MIT License, Python 3.11, FastAPI, Supabase-ready]
 
-## Quickstart (Windows / Git Bash)
+## Overview
+Short paragraph describing:
+- Purpose: AI agent to classify U.S. HTS codes and suggest duty-saving opportunities
+- Based on Agentic RAG (LLM + retrieval agents)
+- U.S.-jurisdiction datasets only (CROSS rulings, HTS codes, tariff schedules, etc.)
 
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-
-# optional: copy environment template
-copy .env.example .env
-
-# seed tiny offline sample
-python app/db/seed_sample.py
-
-# run API
-uvicorn app.api.main:app --reload
-```
+## Quickstart (Local)
+1. Clone repo & create virtual env
+2. pip install -r requirements.txt
+3. cp .env.example .env
+4. uvicorn app.api.main:app --reload
 
 Visit http://127.0.0.1:8000/health
 
-## Notes
-- This skeleton includes a **token budget guardrail** and structured logging stubs.
-- `/classify` currently returns a placeholder response; real RAG wiring comes in Week-2.
+## Docker/Container
+```bash
+docker build -t hts-copilot .
+docker run -p 8000:8000 hts-copilot
