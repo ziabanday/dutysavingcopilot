@@ -43,6 +43,7 @@ jobs:
         env:
           NO_NETWORK: "1"
           OPENAI_API_MOCK: "1"
+          OPENAI_API_KEY: "dummy"   # satisfy OpenAI SDK init in offline mode
           PYTHONPATH: ${{ github.workspace }}
         run: |
           mkdir -p artifacts/test-results
