@@ -1,0 +1,55 @@
+name: Week-6 Phase-4 — Offline CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - "app/**"
+      - "tests/**"
+      - "docs/**"
+      - "pyproject.toml"
+      - "requirements.txt"
+      - ".github/**"
+
+jobs:
+  offline-tests:
+    name: offline-tests (NO_NETWORK, OPENAI_API_MOCK)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            # Fallback for pyproject-only repos
+            pip install -e ".[dev]" || pip install .
+          fi
+          pip install pytest pytest-cov
+
+      - name: Run pytest (offline)
+        env:
+          NO_NETWORK: "1"
+          OPENAI_API_MOCK: "1"
+        run: |
+          mkdir -p artifacts/test-results
+          # JUnit XML + plain log
+          pytest -q --junitxml=artifacts/test-results/junit.xml 2>&1 | tee artifacts/test-results/pytest-stdout.txt
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-offline
+          path: artifacts/test-results/*
+          if-no-files-found: warn
