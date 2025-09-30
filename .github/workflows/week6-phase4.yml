@@ -32,9 +32,10 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
-          else
-            # Fallback for pyproject-only repos
-            pip install -e ".[dev]" || pip install .
+          fi
+          # Install project (editable) to ensure imports like `from app...` work
+          if [ -f pyproject.toml ]; then
+            pip install -e ".[dev]" || pip install -e .
           fi
           pip install pytest pytest-cov
 
@@ -42,9 +43,9 @@ jobs:
         env:
           NO_NETWORK: "1"
           OPENAI_API_MOCK: "1"
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           mkdir -p artifacts/test-results
-          # JUnit XML + plain log
           pytest -q --junitxml=artifacts/test-results/junit.xml 2>&1 | tee artifacts/test-results/pytest-stdout.txt
 
       - name: Upload test artifacts
