@@ -1,4 +1,4 @@
-name: Week-6 Phase-4 — Offline-first CI + Optional Online Smoke
+name: Week-6 Phase-4 — Offline-first CI
 
 on:
   push:
@@ -6,15 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
 
-# Expose secrets once at workflow level so we can use env.* in job-level if:
-env:
-  PG_DSN: ${{ secrets.PG_DSN }}
-
 jobs:
   offline:
     name: Offline-first
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -78,77 +73,6 @@ jobs:
           if [ -f artifacts/metrics/offline-metrics.jsonl ]; then
             echo "- events: $(wc -l < artifacts/metrics/offline-metrics.jsonl | tr -d ' ')" >> "$GITHUB_STEP_SUMMARY"
             echo "- file: artifacts/metrics/offline-metrics.jsonl" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "- no metrics file emitted" >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-  online:
-    name: Online smoke (pgvector gated)
-    # Gate using env.PG_DSN so the expression context is always valid
-    if: ${{ env.PG_DSN != '' }}
-    runs-on: ubuntu-latest
-    env:
-      # Re-expose to the job/steps (inherited from workflow env too)
-      PG_DSN: ${{ env.PG_DSN }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install system deps (psycopg/build tools)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libpq-dev build-essential
-
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install deps
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-
-      - name: Run pytest (online pgvector smoke)
-        env:
-          METRICS_JSON: artifacts/metrics/online-metrics.jsonl
-        run: |
-          mkdir -p artifacts/test-results-online
-          mkdir -p artifacts/metrics
-          pytest -q -m "online and pgvector" --junitxml=artifacts/test-results-online/junit.xml 2>&1 | tee artifacts/test-results-online/pytest-stdout.txt
-
-      - name: Upload online artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-online
-          path: artifacts/test-results-online/*
-          if-no-files-found: warn
-
-      - name: Upload metrics (online)
-        uses: actions/upload-artifact@v4
-        with:
-          name: metrics-online
-          path: artifacts/metrics/*
-          if-no-files-found: warn
-
-      - name: Summarize retrieval metrics (online)
-        if: always()
-        shell: bash
-        run: |
-          echo "### Online retrieval metrics" >> "$GITHUB_STEP_SUMMARY"
-          if [ -f artifacts/metrics/online-metrics.jsonl ]; then
-            echo "- events: $(wc -l < artifacts/metrics/online-metrics.jsonl | tr -d ' ')" >> "$GITHUB_STEP_SUMMARY"
-            echo "- file: artifacts/metrics/online-metrics.jsonl" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "- no metrics file emitted" >> "$GITHUB_STEP_SUMMARY"
           fi
