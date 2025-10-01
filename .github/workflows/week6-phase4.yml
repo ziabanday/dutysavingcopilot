@@ -6,9 +6,13 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Expose secrets once at workflow level so we can use env.* in job-level if:
+env:
+  PG_DSN: ${{ secrets.PG_DSN }}
+
 jobs:
-  tests-offline:
-    name: Offline tests (deterministic, no network)
+  offline:
+    name: Offline-first
     runs-on: ubuntu-latest
 
     steps:
@@ -19,6 +23,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Install system deps (psycopg/build tools)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev build-essential
 
       - name: Cache pip
         uses: actions/cache@v4
@@ -73,12 +82,14 @@ jobs:
             echo "- no metrics file emitted" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-  tests-online:
-    name: Online pgvector smoke (gated)
-    if: ${{ secrets.PG_DSN != '' }}
+  online:
+    name: Online smoke (pgvector gated)
+    # Gate using env.PG_DSN so the expression context is always valid
+    if: ${{ env.PG_DSN != '' }}
     runs-on: ubuntu-latest
     env:
-      PG_DSN: ${{ secrets.PG_DSN }}
+      # Re-expose to the job/steps (inherited from workflow env too)
+      PG_DSN: ${{ env.PG_DSN }}
 
     steps:
       - name: Checkout
@@ -88,6 +99,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Install system deps (psycopg/build tools)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev build-essential
 
       - name: Cache pip
         uses: actions/cache@v4
