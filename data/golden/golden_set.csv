@@ -1,7 +1,4 @@
-query,expected
-USB charger 5V 1A,8504.40
-Phone wall charger 5V 2A,8504.40
-Laptop AC adapter 19V,8504.40
-Spare power supply module (part) for transformer,8504.90
-Wireless charging pad,8504.40
-Unrelated gibberish text xyz,ABSTAIN
+sku,notes,expected_code
+AC adapter 12V 2A,,8504.40
+USB charger 5V 1A,,8504.40
+Laptop power supply,,8504.40

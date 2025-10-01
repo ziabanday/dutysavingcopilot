@@ -1,12 +1,21 @@
+.git
 .venv
 __pycache__
+.pytest_cache
 *.pyc
 *.pyo
+*.pyd
+dist
+build
+.eggs
+.mypy_cache
+.DS_Store
+.env
+.env.*
 *.log
-*.bak
-*.zip
-local.db*
-logs/
-tests/
-docs/
-.git
+node_modules
+# keep data/ INCLUDED (commented out on purpose)
+# data/
+# If you have large scratch dirs inside data/, ignore those specifically:
+data/cache/
+data/tmp/

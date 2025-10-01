@@ -1,18 +1,37 @@
 # app/core/openai_wrapper.py
 # Real OpenAI calls with a deterministic stub path when NO_API is truthy.
+# Now uses a lazy, mockable client so tests/CI can run with zero secrets.
 
 from __future__ import annotations
 
 import os
 import time
 from typing import Dict, List, Any
+from functools import lru_cache
 
 from dotenv import load_dotenv
 load_dotenv()  # loads .env from project root (and parents)
 
-# ---- OpenAI client (singleton) ----------------------------------------------
+# ---- OpenAI client (lazy, mockable singleton) --------------------------------
 from openai import OpenAI
-_CLIENT = OpenAI()  # singleton; reused by embed() and chat()
+
+# Lazy, mockable singleton. Avoids requiring OPENAI_API_KEY at import time.
+_CLIENT = None
+
+def _get_client():
+    global _CLIENT
+    if _CLIENT is not None:
+        return _CLIENT
+    # Allow tests/CI to run offline without secrets.
+    if os.getenv("OPENAI_API_MOCK") == "1":
+        class _DummyClient:
+            def __getattr__(self, _):
+                raise RuntimeError("OpenAI client is disabled (OPENAI_API_MOCK=1).")
+        _CLIENT = _DummyClient()
+        return _CLIENT
+    # Normal path (prod/local dev). OpenAI() reads OPENAI_API_KEY from env if present.
+    _CLIENT = OpenAI()
+    return _CLIENT
 # -----------------------------------------------------------------------------
 
 
@@ -22,6 +41,7 @@ def _truthy(x) -> bool:
 
 def is_stub_mode() -> bool:
     # only stub when NO_API is explicitly truthy (e.g., 1/true/yes/on)
+    # (kept for backward-compat with existing env and tests)
     return _truthy(os.getenv("NO_API", "0"))
 # -----------------------------------------------------------------------------
 
@@ -40,12 +60,11 @@ def _log(event: str, meta: Dict[str, Any]):
 
 
 # ---- Embeddings with LRU cache ----------------------------------------------
-from functools import lru_cache
-
 @lru_cache(maxsize=256)
 def _embed_cached(text: str, model: str) -> tuple:
     """Call OpenAI once per (text, model) pair; cache the vector."""
-    resp = _CLIENT.embeddings.create(model=model, input=text)
+    client = _get_client()
+    resp = client.embeddings.create(model=model, input=text)
     vec = resp.data[0].embedding
     return (model, tuple(vec))  # tuples so they’re hashable
 
@@ -57,7 +76,7 @@ def embed(text: str, model: str = "text-embedding-3-small") -> List[float]:
       If NO_API is truthy, returns a deterministic pseudo-embedding (stable).
 
     Prod mode:
-      Uses the OpenAI Embeddings API via the shared _CLIENT with an LRU cache.
+      Uses the OpenAI Embeddings API via a lazy singleton with an LRU cache.
     """
     t0 = time.perf_counter()
 
@@ -100,7 +119,7 @@ def chat(
       If NO_API is truthy, returns a deterministic JSON-shaped string.
 
     Prod mode:
-      Uses the OpenAI Chat Completions API via the shared _CLIENT.
+      Uses the OpenAI Chat Completions API via the lazy singleton client.
     """
     t0 = time.perf_counter()
 
@@ -120,6 +139,7 @@ def chat(
     # -------------------------------------------------------------------------
 
     # ---- Real API call (shared client) --------------------------------------
+    client = _get_client()
     try:
         kwargs = dict(
             model=model,
@@ -130,7 +150,7 @@ def chat(
         if response_format is not None:
             kwargs["response_format"] = response_format  # e.g., {"type": "json_object"}
 
-        resp = _CLIENT.chat.completions.create(**kwargs)
+        resp = client.chat.completions.create(**kwargs)
         content = resp.choices[0].message.content or ""
         usage = getattr(resp, "usage", None)
         tk_in = getattr(usage, "prompt_tokens", 0) if usage else 0
@@ -145,8 +165,10 @@ def chat(
 
 
 def warmup():
+    """Optional: touch the API once in environments where a key is present."""
     try:
-        _CLIENT.chat.completions.create(
+        client = _get_client()
+        client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": "ok"}],
             max_tokens=1,

@@ -1,30 +1,44 @@
-FROM python:3.11-slim
+# syntax=docker/dockerfile:1
+ARG BASE_IMAGE=python:3.12-slim
+FROM ${BASE_IMAGE}
 
+# 1) System deps (lean)
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+      ca-certificates curl tini; \
+    rm -rf /var/lib/apt/lists/*
+
+# 2) Global env
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
+# 3) Non-root user
+ARG APP_USER=appuser
+RUN useradd -m -u 10001 -s /usr/sbin/nologin ${APP_USER}
+
+# 4) Working dir & dep manifests
 WORKDIR /app
+COPY requirements.txt* pyproject.toml* poetry.lock* /app/
 
-# Install build helpers first
-RUN python -m pip install --upgrade pip setuptools wheel
+# 5) Install deps (prefer wheels)
+ARG PIP_FLAGS="--no-cache-dir --prefer-binary"
+RUN set -eux; \
+    python -m pip install --upgrade pip setuptools wheel; \
+    if [ -f requirements.txt ]; then pip install $PIP_FLAGS -r requirements.txt; fi; \
+    if [ -f pyproject.toml ]; then pip install $PIP_FLAGS -e .; fi
 
-# Copy only requirements first (cache-friendly)
-COPY requirements.txt /app/requirements.txt
+# 6) Copy application (with ownership so tests can write under /app)
+COPY --chown=${APP_USER}:${APP_USER} . /app
 
-# If you are behind a proxy, you can pass these at build time:
-#   docker build --build-arg HTTPS_PROXY=%HTTPS_PROXY% --build-arg HTTP_PROXY=%HTTP_PROXY% ...
-ARG HTTP_PROXY
-ARG HTTPS_PROXY
-ENV http_proxy=${HTTP_PROXY}
-ENV https_proxy=${HTTPS_PROXY}
+# 7) Health check
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD python -c "import sys; sys.exit(0)"
 
-# Install deps (with timeout and no cache)
-RUN pip install --no-cache-dir --default-timeout=120 -r /app/requirements.txt
+# 8) Drop privileges and set entrypoint
+USER ${APP_USER}
+ENTRYPOINT ["/usr/bin/tini", "--"]
 
-# Now copy the app
-COPY . /app
-
-EXPOSE 8000
-
-CMD ["uvicorn", "app.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Default: safe no-op
+CMD ["python", "-m", "app.io.sheets_runner", "ping"]

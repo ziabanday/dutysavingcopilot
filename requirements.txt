@@ -1,4 +1,4 @@
-fastapi
+﻿fastapi
 uvicorn[standard]
 pydantic>=2
 pydantic-settings>=2.3
@@ -12,3 +12,13 @@ numpy>=1.26
 psycopg2-binary
 pgvector
 pytest
+# Week-5b LangGraph agent (local functional DAG)
+langgraph>=0.2
+
+# (existing requirements kept)
+gspread>=5.12.0
+google-auth>=2.34.0
+
+# existing deps...
+jsonschema>=4.21,<5
+

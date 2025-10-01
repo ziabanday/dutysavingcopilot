@@ -1,18 +1,28 @@
-.venv
+# --- Virtual envs ---
+.venv/
+venv/
+env/
+
+# --- Python bytecode / caches ---
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# --- Logs & local artifacts ---
 *.log
 *.bak
 local.db
 local.db.*
 logs/
+
+# --- Project data/cache/build artifacts ---
 data/index/
 data/cache/
 dist/
 build/
 *.zip
+
 # ---- Secrets & environment files ----
 # Ignore any env file patterns (root and nested)
 .env
@@ -25,3 +35,36 @@ build/
 # (optional) local Supabase configs if you export them
 supabase/.temp/
 
+# --- OS / editor junk ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.code-workspace
+
+# --- Python tooling caches / coverage ---
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage/
+.coverage*
+htmlcov/
+
+# --- Packaging / wheels ---
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+*.whl
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- Optional: locally generated certs/keys (avoid accidental commits) ---
+*.pem
+*.key
+*.pfx
+*.crt
+*.cer
+
+# docker compose vars (non-secret but local)
+.env.compose
