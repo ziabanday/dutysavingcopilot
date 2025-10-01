@@ -1,3 +1,10 @@
-* text=auto eol=lf
+# Normalize line endings and keep markdown/python LF-stable cross-platform
+* text=auto
+*.md text eol=lf
+*.py text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+Dockerfile text eol=lf
 *.ps1 text eol=crlf
 *.bat text eol=crlf
