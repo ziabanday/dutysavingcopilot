@@ -11,6 +11,7 @@ import re
 import sys
 
 from app.api.schemas import ClassifyRequest, ClassifyResponse
+from app.metrics.cb import build_metrics_cb
 from app.config import settings
 
 # Safe logger
@@ -261,10 +262,23 @@ def classify(req: Any = Body(default=None)) -> ClassifyResponse:
 
     # Retrieval (monkeypatch-friendly)
     try:
+        metrics_cb = build_metrics_cb()
         if hasattr(retrieval_mod, "retrieve_context"):
-            hits = retrieval_mod.retrieve_context(query, top_k=top_k)  # type: ignore[attr-defined]
+            if metrics_cb:
+                try:
+                    hits = retrieval_mod.retrieve_context(query, top_k=top_k, metrics_cb=metrics_cb)  # type: ignore[attr-defined]
+                except TypeError:
+                    hits = retrieval_mod.retrieve_context(query, top_k=top_k)  # older sig
+            else:
+                hits = retrieval_mod.retrieve_context(query, top_k=top_k)  # type: ignore[attr-defined]
         elif _HAVE_RETRIEVAL_FUNC:
-            hits = retrieve_with_fusion(query=query, top_k=top_k)  # type: ignore[misc]
+            if metrics_cb:
+                try:
+                    hits = retrieve_with_fusion(query=query, top_k=top_k, metrics_cb=metrics_cb)  # type: ignore[misc]
+                except TypeError:
+                    hits = retrieve_with_fusion(query=query, top_k=top_k)  # older sig
+            else:
+                hits = retrieve_with_fusion(query=query, top_k=top_k)  # type: ignore[misc]
         else:
             hits = []
     except Exception as e:

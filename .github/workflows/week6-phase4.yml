@@ -1,53 +1,49 @@
-name: Week-6 Phase-4 — Offline CI
+name: Week-6 Phase-4 — Offline-first CI + Optional Online Smoke
 
 on:
-  workflow_dispatch:
   push:
-    branches: [ main ]
-    paths:
-      - "app/**"
-      - "tests/**"
-      - "docs/**"
-      - "pyproject.toml"
-      - "requirements.txt"
-      - ".github/**"
+    branches: [ main, develop, "**/week6**", "**/week6-*", "**/phase4**" ]
+  pull_request:
 
 jobs:
-  offline-tests:
-    name: offline-tests (NO_NETWORK, OPENAI_API_MOCK)
+  tests-offline:
+    name: Offline tests (deterministic, no network)
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-          cache: "pip"
+          python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install deps (offline-friendly)
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          fi
-          # Install project (editable) to ensure imports like `from app...` work
-          if [ -f pyproject.toml ]; then
-            pip install -e ".[dev]" || pip install -e .
-          fi
-          pip install pytest pytest-cov
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
       - name: Run pytest (offline)
         env:
           NO_NETWORK: "1"
           OPENAI_API_MOCK: "1"
-          OPENAI_API_KEY: "dummy"   # satisfy OpenAI SDK init in offline mode
-          MIN_SCORE: "0.0"          # lenient for offline CI
+          OPENAI_API_KEY: "dummy"
+          MIN_SCORE: "0.0"
           PYTHONPATH: ${{ github.workspace }}
+          METRICS_JSON: artifacts/metrics/offline-metrics.jsonl
         run: |
           mkdir -p artifacts/test-results
+          mkdir -p artifacts/metrics
           pytest -q --junitxml=artifacts/test-results/junit.xml 2>&1 | tee artifacts/test-results/pytest-stdout.txt
 
       - name: Upload test artifacts
@@ -57,49 +53,62 @@ jobs:
           path: artifacts/test-results/*
           if-no-files-found: warn
 
-  online-tests:
-    name: online-tests (pgvector smoke)
-    # Only run if a Postgres DSN secret exists
+      - name: Upload metrics (offline)
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-offline
+          path: artifacts/metrics/*
+          if-no-files-found: warn
+
+      - name: Summarize retrieval metrics (offline)
+        if: always()
+        shell: bash
+        run: |
+          echo "### Offline retrieval metrics" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f artifacts/metrics/offline-metrics.jsonl ]; then
+            echo "- events: $(wc -l < artifacts/metrics/offline-metrics.jsonl | tr -d ' ')" >> "$GITHUB_STEP_SUMMARY"
+            echo "- file: artifacts/metrics/offline-metrics.jsonl" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- no metrics file emitted" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  tests-online:
+    name: Online pgvector smoke (gated)
+    # Only run if PG_DSN is provided via repo/org/environment secrets
     if: ${{ secrets.PG_DSN != '' }}
     runs-on: ubuntu-latest
+    env:
+      PG_DSN: ${{ secrets.PG_DSN }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-          cache: "pip"
+          python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          fi
-          if [ -f pyproject.toml ]; then
-            pip install -e ".[dev]" || pip install -e .
-          fi
-          pip install pytest pytest-cov
-
-      - name: Prepare env (PG_DSN + OpenAI key fallback)
-        run: |
-          echo "CI_ONLINE=1" >> $GITHUB_ENV
-          echo "NO_NETWORK=0" >> $GITHUB_ENV
-          echo "PG_DSN=${{ secrets.PG_DSN }}" >> $GITHUB_ENV
-          # If OPENAI_API_KEY secret is not set, use a harmless dummy to satisfy SDK import
-          if [ -z "${{ secrets.OPENAI_API_KEY }}" ]; then
-            echo "OPENAI_API_KEY=dummy" >> $GITHUB_ENV
-          else
-            echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
-          fi
-          echo "PYTHONPATH=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
       - name: Run pytest (online pgvector smoke)
+        env:
+          METRICS_JSON: artifacts/metrics/online-metrics.jsonl
         run: |
           mkdir -p artifacts/test-results-online
+          mkdir -p artifacts/metrics
           pytest -q -m "online and pgvector" --junitxml=artifacts/test-results-online/junit.xml 2>&1 | tee artifacts/test-results-online/pytest-stdout.txt
 
       - name: Upload online artifacts
@@ -108,3 +117,22 @@ jobs:
           name: test-results-online
           path: artifacts/test-results-online/*
           if-no-files-found: warn
+
+      - name: Upload metrics (online)
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-online
+          path: artifacts/metrics/*
+          if-no-files-found: warn
+
+      - name: Summarize retrieval metrics (online)
+        if: always()
+        shell: bash
+        run: |
+          echo "### Online retrieval metrics" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f artifacts/metrics/online-metrics.jsonl ]; then
+            echo "- events: $(wc -l < artifacts/metrics/online-metrics.jsonl | tr -d ' ')" >> "$GITHUB_STEP_SUMMARY"
+            echo "- file: artifacts/metrics/online-metrics.jsonl" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- no metrics file emitted" >> "$GITHUB_STEP_SUMMARY"
+          fi
