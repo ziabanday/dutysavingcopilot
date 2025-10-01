@@ -4,6 +4,7 @@ on:
   push:
     branches: [ main, develop, "**/week6**", "**/week6-*", "**/phase4**" ]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   tests-offline:
@@ -74,7 +75,6 @@ jobs:
 
   tests-online:
     name: Online pgvector smoke (gated)
-    # Only run if PG_DSN is provided via repo/org/environment secrets
     if: ${{ secrets.PG_DSN != '' }}
     runs-on: ubuntu-latest
     env:
